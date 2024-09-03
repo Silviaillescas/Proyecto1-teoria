@@ -3,7 +3,6 @@ from graphviz import Digraph
 class State:
     def __init__(self):
         self.transitions = {}
-        self.is_accepting = False  # Estado de aceptación para el DFA
 
     def add_transition(self, symbol, state):
         if symbol in self.transitions:
@@ -80,7 +79,7 @@ def convert_to_postfix(regex):
     output = []
     stack = []
 
-    regex = add_concatenation(regex)  # Insertar operadores de concatenación
+    regex = add_concatenation(regex)  # Insert concatenation operators
     i = 0
     while i < len(regex):
         char = regex[i]
@@ -161,119 +160,3 @@ def construct_thompson(postfix):
         raise ValueError(f"The postfix expression is malformed. Final stack content: {stack}")
 
     return stack.pop()
-
-class DFA:
-    def __init__(self, start_state, transitions, accept_states):
-        self.start_state = start_state
-        self.transitions = transitions
-        self.accept_states = accept_states
-
-def epsilon_closure(states):
-    stack = list(states)
-    closure = set(states)
-
-    while stack:
-        state = stack.pop()
-        if 'ε' in state.transitions:
-            for next_state in state.transitions['ε']:
-                if next_state not in closure:
-                    closure.add(next_state)
-                    stack.append(next_state)
-
-    return closure
-
-def move(states, symbol):
-    result = set()
-    for state in states:
-        if symbol in state.transitions:
-            result.update(state.transitions[symbol])
-    return result
-
-def construct_dfa_from_nfa(nfa):
-    start_closure = epsilon_closure({nfa.start})
-    dfa_states = {frozenset(start_closure): 0}
-    dfa_transitions = {}
-    dfa_accept_states = set()
-    
-    unmarked_states = [frozenset(start_closure)]
-    state_count = 1
-    
-    while unmarked_states:
-        current_set = unmarked_states.pop()
-        current_state_id = dfa_states[current_set]
-
-        dfa_transitions[current_state_id] = {}
-        
-        for symbol in 'abcdefghijklmnopqrstuvwxyz':  # Generalizando el alfabeto
-            next_set = epsilon_closure(move(current_set, symbol))
-            if not next_set:
-                continue
-            
-            if frozenset(next_set) not in dfa_states:
-                dfa_states[frozenset(next_set)] = state_count
-                unmarked_states.append(frozenset(next_set))
-                state_count += 1
-            
-            dfa_transitions[current_state_id][symbol] = dfa_states[frozenset(next_set)]
-        
-        if nfa.end in current_set:
-            dfa_accept_states.add(current_state_id)
-
-    return DFA(0, dfa_transitions, dfa_accept_states)
-
-def visualize_nfa(start_state, graph, state_map, count):
-    if start_state in state_map:
-        return state_map[start_state]
-
-    state_id = str(count[0])
-    state_map[start_state] = state_id
-    graph.node(state_id, "State")
-    count[0] += 1
-
-    for symbol, states in start_state.transitions.items():
-        for state in states:
-            target_id = visualize_nfa(state, graph, state_map, count)
-            graph.edge(state_id, target_id, label=symbol)
-
-    return state_id
-
-def visualize_dfa(dfa, graph):
-    for state, transitions in dfa.transitions.items():
-        graph.node(str(state), shape="circle")
-        for symbol, next_state in transitions.items():
-            graph.edge(str(state), str(next_state), label=symbol)
-
-    for accept_state in dfa.accept_states:
-        graph.node(str(accept_state), shape="doublecircle")
-
-# Función para procesar el archivo
-def process_file(filename):
-    with open(filename, 'r') as file:
-        expressions = file.readlines()
-
-    for i, expression in enumerate(expressions):
-        expression = expression.strip()
-        try:
-            postfix = convert_to_postfix(expression)
-            nfa = construct_thompson(postfix)
-            
-            # Visualizar el AFN
-            graph_nfa = Digraph()
-            visualize_nfa(nfa.start, graph_nfa, {}, [0])
-            graph_nfa.render(filename=f'afn_{i+1}', format='png', cleanup=True)
-            print(f'NFA for \"{expression}\" generated as afn_{i+1}.png')
-            
-            # Convertir el AFN a DFA
-            dfa = construct_dfa_from_nfa(nfa)
-            
-            # Visualizar el DFA
-            graph_dfa = Digraph()
-            visualize_dfa(dfa, graph_dfa)
-            graph_dfa.render(filename=f'afd_{i+1}', format='png', cleanup=True)
-            print(f'DFA for \"{expression}\" generated as afd_{i+1}.png')
-        
-        except Exception as e:
-            print(f"Error processing expression '{expression}': {str(e)}")
-
-if __name__ == "__main__":
-    process_file('expresiones.txt')
