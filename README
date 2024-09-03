@@ -16,7 +16,6 @@ El programa también genera visualizaciones gráficas de los autómatas generado
 ## Instrucciones de Instalación
 
 1. **Clonar el repositorio**:
-   ```bash
    git clone <https://github.com/Silviaillescas/Proyecto1-teoria.git>
    cd <Proyecto1-teoria> 
 
