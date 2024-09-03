@@ -246,6 +246,57 @@ def visualize_dfa(dfa, graph):
     for accept_state in dfa.accept_states:
         graph.node(str(accept_state), shape="doublecircle")
 
+# Nueva función para minimizar DFA
+def minimize_dfa(dfa):
+    # Implementación del algoritmo de minimización
+    def distinguishable_pairs(dfa):
+        states = list(dfa.transitions.keys())
+        P = {}
+        for i in range(len(states)):
+            for j in range(i):
+                if (states[i] in dfa.accept_states) != (states[j] in dfa.accept_states):
+                    P[(states[i], states[j])] = True
+                else:
+                    P[(states[i], states[j])] = False
+
+        changed = True
+        while changed:
+            changed = False
+            for (s1, s2) in P:
+                if not P[(s1, s2)]:
+                    for symbol in dfa.transitions[s1]:
+                        t1 = dfa.transitions[s1].get(symbol, None)
+                        t2 = dfa.transitions[s2].get(symbol, None)
+                        if t1 is not None and t2 is not None and t1 != t2 and (t1, t2) in P and P[(t1, t2)]:
+                            P[(s1, s2)] = True
+                            changed = True
+                            break
+        return P
+
+    P = distinguishable_pairs(dfa)
+
+    # Merge indistinguishable states
+    merge_map = {}
+    new_states = set(dfa.transitions.keys())
+    for (s1, s2), are_distinguishable in P.items():
+        if not are_distinguishable:
+            merge_map[s2] = s1
+            new_states.discard(s2)
+
+    minimized_transitions = {}
+    for state in new_states:
+        state_repr = merge_map.get(state, state)
+        if state_repr not in minimized_transitions:
+            minimized_transitions[state_repr] = {}
+
+        for symbol, target in dfa.transitions[state].items():
+            target_repr = merge_map.get(target, target)
+            minimized_transitions[state_repr][symbol] = target_repr
+
+    minimized_accept_states = {merge_map.get(s, s) for s in dfa.accept_states}
+
+    return DFA(dfa.start_state, minimized_transitions, minimized_accept_states)
+
 # Función para procesar el archivo
 def process_file(filename):
     with open(filename, 'r') as file:
@@ -266,11 +317,14 @@ def process_file(filename):
             # Convertir el AFN a DFA
             dfa = construct_dfa_from_nfa(nfa)
             
+            # Minimizar el DFA
+            minimized_dfa = minimize_dfa(dfa)
+            
             # Visualizar el DFA
             graph_dfa = Digraph()
-            visualize_dfa(dfa, graph_dfa)
-            graph_dfa.render(filename=f'afd_{i+1}', format='png', cleanup=True)
-            print(f'DFA for \"{expression}\" generated as afd_{i+1}.png')
+            visualize_dfa(minimized_dfa, graph_dfa)
+            graph_dfa.render(filename=f'afd_{i+1}_minimizado', format='png', cleanup=True)
+            print(f'DFA Minimizado for \"{expression}\" generated as afd_{i+1}_minimizado.png')
         
         except Exception as e:
             print(f"Error processing expression '{expression}': {str(e)}")
