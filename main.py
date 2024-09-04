@@ -298,29 +298,40 @@ def minimize_dfa(dfa):
 # Funciones de simulación de AFN y DFA
 def simulate_nfa(nfa, w):
     current_states = epsilon_closure({nfa.start})
+    print(f"Estados actuales después del cierre epsilon: {current_states}")
+    
     for symbol in w:
         next_states = set()
+        print(f"Procesando símbolo: {symbol}")
         for state in current_states:
             if symbol in state.transitions:
                 next_states.update(state.transitions[symbol])
+                print(f"Transición de estado con símbolo '{symbol}' a: {state.transitions[symbol]}")
+            else:
+                print(f"No hay transición para el símbolo '{symbol}' en el estado {state}")
         current_states = epsilon_closure(next_states)
+        print(f"Estados actuales después del cierre epsilon: {current_states}")
     
-    return nfa.end in current_states
+    result = nfa.end in current_states
+    print(f"El estado final es un estado de aceptación: {result}")
+    return result
 
 def simulate_dfa(dfa, w):
     current_state = dfa.start_state
     print(f"Iniciando simulación en el estado: {current_state}")
+    
     for symbol in w:
         print(f"Símbolo actual: {symbol}")
         if symbol in dfa.transitions[current_state]:
             current_state = dfa.transitions[current_state][symbol]
             print(f"Transición al estado: {current_state}")
         else:
-            print(f"No hay transición para el símbolo {symbol} en el estado {current_state}")
+            print(f"No hay transición para el símbolo '{symbol}' en el estado {current_state}")
             return False
     
-    print(f"Estado final: {current_state}, es estado de aceptación: {current_state in dfa.accept_states}")
-    return current_state in dfa.accept_states
+    is_accepting = current_state in dfa.accept_states
+    print(f"Estado final: {current_state}, es estado de aceptación: {is_accepting}")
+    return is_accepting
 
 # Función para procesar el archivo
 def process_file(filename, input_string):
@@ -347,14 +358,20 @@ def process_file(filename, input_string):
             dfa = construct_dfa_from_nfa(nfa)
             print("AFD generado.")
 
+            # Visualizar el DFA (sin minimizar)
+            graph_dfa = Digraph()
+            visualize_dfa(dfa, graph_dfa)
+            graph_dfa.render(filename=f'afd_{i+1}', format='png', cleanup=True)
+            print(f'DFA for \"{expression}\" generated as afd_{i+1}.png')
+
             # Minimizar el DFA
             minimized_dfa = minimize_dfa(dfa)
             print("AFD Minimizado generado.")
 
-            # Visualizar el DFA
-            graph_dfa = Digraph()
-            visualize_dfa(minimized_dfa, graph_dfa)
-            graph_dfa.render(filename=f'afd_{i+1}_minimizado', format='png', cleanup=True)
+            # Visualizar el DFA minimizado
+            graph_dfa_minimized = Digraph()
+            visualize_dfa(minimized_dfa, graph_dfa_minimized)
+            graph_dfa_minimized.render(filename=f'afd_{i+1}_minimizado', format='png', cleanup=True)
             print(f'DFA Minimizado for \"{expression}\" generated as afd_{i+1}_minimizado.png')
             
             # Simulación del AFN y AFD
@@ -369,10 +386,6 @@ def process_file(filename, input_string):
         
         except Exception as e:
             print(f"Error processing expression '{expression}': {str(e)}")
-
-if __name__ == "__main__":
-    input_string = "ab"  # Cadena de entrada para la simulación
-    process_file('expresiones.txt', input_string)
 
 if __name__ == "__main__":
     input_string = "ab"  # Cadena de entrada para la simulación
