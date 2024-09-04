@@ -79,7 +79,7 @@ def convert_to_postfix(regex):
     output = []
     stack = []
 
-    regex = add_concatenation(regex)  # Insert concatenation operators
+    regex = add_concatenation(regex)  # Insertar operadores de concatenación
     i = 0
     while i < len(regex):
         char = regex[i]
@@ -157,6 +157,22 @@ def construct_thompson(postfix):
         i += 1
 
     if len(stack) != 1:
-        raise ValueError(f"The postfix expression is malformed. Final stack content: {stack}")
+        raise ValueError(f"La expresión postfix está mal formada. Contenido final de la pila: {stack}")
 
     return stack.pop()
+
+def visualize_nfa(start_state, graph, state_map, count):
+    if start_state in state_map:
+        return state_map[start_state]
+
+    state_id = str(count[0])
+    state_map[start_state] = state_id
+    graph.node(state_id, "State")
+    count[0] += 1
+
+    for symbol, states in start_state.transitions.items():
+        for state in states:
+            target_id = visualize_nfa(state, graph, state_map, count)
+            graph.edge(state_id, target_id, label=symbol)
+
+    return state_id
