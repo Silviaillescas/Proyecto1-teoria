@@ -1,0 +1,43 @@
+# Proyecto No. 1 - Analizador Léxico con Autómatas Finitos
+Silvia Illescas y Michelle Mejia
+
+## Descripción
+
+Este proyecto implementa un analizador léxico que verifica la aceptación de cadenas en lenguajes regulares utilizando autómatas finitos. A partir de una expresión regular dada, el programa realiza las siguientes operaciones:
+
+1. **Conversión de la expresión regular de notación infix a postfix** utilizando el Algoritmo de Shunting Yard.
+2. **Construcción de un Autómata Finito No Determinista (AFN)** utilizando el Algoritmo de Thompson.
+3. **Conversión del AFN a un Autómata Finito Determinista (AFD)** utilizando el Algoritmo de Subconjuntos.
+4. **Minimización del AFD** para optimizar el autómata resultante.
+5. **Simulación del AFN y del AFD** para determinar si una cadena de entrada pertenece al lenguaje descrito por la expresión regular.
+
+El programa también genera visualizaciones gráficas de los autómatas generados.
+
+## Instrucciones de Instalación
+
+1. **Clonar el repositorio**:
+   git clone <https://github.com/Silviaillescas/Proyecto1-teoria.git>
+   cd <Proyecto1-teoria> 
+
+
+2. **Instalar Dependencias**:
+Este proyecto requiere Python 3.x y la biblioteca graphviz. Puedes instalar las dependencias utilizando pip:   
+pip install graphviz
+
+
+3. **Instalar Dependencias**:
+Asegúrate de tener Graphviz instalado en tu sistema. Puedes descargarlo desde Graphviz.org y asegurarte de que los binarios estén en tu PATH.
+
+## Uso
+El programa principal se encuentra en main.py. Puedes ejecutarlo utilizando Python:
+python main.py
+
+
+El programa lee un archivo de texto (expresiones.txt) que contiene una expresión regular por línea. Asegúrate de que el archivo esté en la misma carpeta que main.py.
+
+Por cada expresión regular en el archivo de entrada, el programa generará:
+
+Una imagen del AFN y AFD minimizado en formato .png.
+Un mensaje en la consola indicando si la cadena de prueba pertenece al lenguaje descrito por la expresión regular.
+
+Este proyecto es de uso académico y está protegido bajo los términos de la licencia proporcionada por la Universidad del Valle de Guatemala.
