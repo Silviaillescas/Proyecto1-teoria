@@ -1,9 +1,10 @@
 from graphviz import Digraph
 
 class State:
-    def __init__(self):
+    def __init__(self, name=None):
         self.transitions = {}
         self.is_accepting = False  # Estado de aceptación para el DFA
+        self.name = name if name is not None else id(self)  # Opcional: agregar un nombre o identificador
 
     def add_transition(self, symbol, state):
         if symbol in self.transitions:
@@ -11,6 +12,13 @@ class State:
         else:
             self.transitions[symbol] = [state]
 
+    # Sobrescribimos __repr__ para una representación más legible
+    def __repr__(self):
+        return f"State({self.name})"
+
+    def __str__(self):
+        return self.__repr__()
+    
 class NFA:
     def __init__(self, start, end):
         self.start = start
@@ -385,7 +393,7 @@ def process_file(filename, input_string):
             print(f'Input "{input_string}" is accepted by Minimized DFA: {minimized_dfa_result}')
         
         except Exception as e:
-            print(f"Error processing expression '{expression}': {str(e)}")
+            print(f" ")
 
 if __name__ == "__main__":
     input_string = "ab"  # Cadena de entrada para la simulación
