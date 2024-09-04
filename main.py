@@ -1,10 +1,22 @@
 from graphviz import Digraph
 
+# Clase para manejar los estados del automata
 class State:
+
+    #Constructor para inicializar un estado de un autómata (AFN o AFD).
+    # transitions: Un diccionario que contiene las transiciones de este estado. La clave es el símbolo, y el valor es una lista de estados a los que puede moverse.
+    #is_accepting: Un booleano que indica si este estado es un estado de aceptación (final).
+    #name: Opcional, puede asignarse un nombre o identificador al estado. Si no se proporciona, se usa el id único del objeto.
+
     def __init__(self, name=None):
         self.transitions = {}
         self.is_accepting = False  # Estado de aceptación para el DFA
         self.name = name if name is not None else id(self)  # Opcional: agregar un nombre o identificador
+
+    #Agrega una transición desde este estado hacia otro estado.
+    #symbol: El símbolo con el que se realiza la transición.
+    #state: El estado de destino al que se mueve al leer el símbolo.
+    #Si ya existe una transición con el símbolo dado, el nuevo estado se agrega a la lista de destinos.
 
     def add_transition(self, symbol, state):
         if symbol in self.transitions:
@@ -16,15 +28,19 @@ class State:
     def __repr__(self):
         return f"State({self.name})"
 
+    # Método para convertir el estado en una cadena de texto cuando se imprime o se convierte en string.
     def __str__(self):
         return self.__repr__()
     
+# Clase para NON DETERMINITSIC FINIT AUTOMAT
 class NFA:
+    # Inicializa el NFA con un estado inicial y final.
     def __init__(self, start, end):
         self.start = start
         self.end = end
 
     @staticmethod
+    # Crea un NFA simple con una transición desde el estado inicial al final.
     def from_symbol(symbol):
         start = State()
         end = State()
@@ -32,11 +48,13 @@ class NFA:
         return NFA(start, end)
 
     @staticmethod
+    # Concatenación de dos NFAs, uniendo el final de nfa1 con el inicio de nfa2.        
     def concatenate(nfa1, nfa2):
         nfa1.end.add_transition('ε', nfa2.start)
         return NFA(nfa1.start, nfa2.end)
 
     @staticmethod
+    # Unión de dos NFAs, agregando un nuevo estado inicial y final.
     def union(nfa1, nfa2):
         start = State()
         end = State()
@@ -47,6 +65,7 @@ class NFA:
         return NFA(start, end)
 
     @staticmethod
+     # Aplica la estrella de Kleene al NFA, permitiendo cero o más repeticiones.
     def kleene_star(nfa):
         start = State()
         end = State()
@@ -56,6 +75,7 @@ class NFA:
         nfa.end.add_transition('ε', end)
         return NFA(start, end)
 
+    # Aplica la operación "más" (una o más repeticiones).
     @staticmethod
     def plus(nfa):
         start = State()
@@ -65,6 +85,7 @@ class NFA:
         nfa.end.add_transition('ε', end)
         return NFA(start, end)
 
+    # Aplica la opción, permitiendo que el NFA ocurra una vez o no.
     @staticmethod
     def optional(nfa):
         start = State()
@@ -74,6 +95,7 @@ class NFA:
         nfa.end.add_transition('ε', end)
         return NFA(start, end)
 
+# Añade el operador de concatenación '.' implícito entre los símbolos donde sea necesario.
 def add_concatenation(regex):
     result = []
     for i in range(len(regex) - 1):
@@ -83,6 +105,7 @@ def add_concatenation(regex):
     result.append(regex[-1])
     return ''.join(result)
 
+# Convierte una expresión regular infija en notación postfix (RPN).
 def convert_to_postfix(regex):
     precedence = {'*': 3, '+': 3, '?': 3, '.': 2, '|': 1, '(': 0, ')': 0}
     output = []
@@ -118,21 +141,26 @@ def convert_to_postfix(regex):
 
     return ''.join(output)
 
+ # Construye un AFN usando el algoritmo de Thompson a partir de una expresión postfix.    
 def construct_thompson(postfix):
+    # Pila para almacenar los AFNs parciales.
     stack = []
 
     i = 0
     while i < len(postfix):
         char = postfix[i]
         if char.isalnum() or char == 'ε' or (char == '[' and postfix[i+1] == ']'):
+            # Crea un AFN simple para un símbolo y lo apila.
             nfa = NFA.from_symbol(char)
             stack.append(nfa)
         elif char == '.':
+            # Concatenación: combina los dos últimos AFNs apilados.
             if len(stack) < 2:
                 raise ValueError("Insufficient operands for concatenation.")
             nfa2 = stack.pop()
             nfa1 = stack.pop()
             stack.append(NFA.concatenate(nfa1, nfa2))
+            # MANEJO CARACTERES ESPECIALES:
         elif char == '|':
             if len(stack) < 2:
                 raise ValueError("Insufficient operands for union.")
@@ -170,12 +198,22 @@ def construct_thompson(postfix):
 
     return stack.pop()
 
+# Inicializa un Autómata Finito Determinista (DFA).
+#start_state: El estado inicial del DFA.
+#transitions: Un diccionario que define las transiciones. La clave es el estado actual, y el valor es un diccionario de símbolos que mapean a los estados de destino.
+#accept_states: Conjunto de estados de aceptación (finales) del DFA.
 class DFA:
     def __init__(self, start_state, transitions, accept_states):
         self.start_state = start_state
         self.transitions = transitions
         self.accept_states = accept_states
 
+#Calcula el cierre epsilon de un conjunto de estados.
+#El cierre epsilon es el conjunto de todos los estados que se pueden alcanzar desde los estados actuales
+#a través de transiciones epsilon (ε) sin consumir ningún símbolo.
+#states: Conjunto de estados desde los cuales calcular el cierre epsilon.
+#Retorna:
+#- closure: Un conjunto de estados que se pueden alcanzar con transiciones epsilon.
 def epsilon_closure(states):
     stack = list(states)
     closure = set(states)
@@ -190,6 +228,12 @@ def epsilon_closure(states):
 
     return closure
 
+
+#Realiza una transición desde un conjunto de estados usando un símbolo específico.
+#states: Conjunto de estados actuales desde los cuales se realizará la transición.
+#symbol: El símbolo que se usa para mover desde los estados actuales.
+#Retorna:
+#result: Conjunto de estados alcanzables al consumir el símbolo desde los estados dados.
 def move(states, symbol):
     result = set()
     for state in states:
