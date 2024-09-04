@@ -476,6 +476,6 @@ def process_file(filename, input_string):
             print(f" ")
 
 if __name__ == "__main__":
-    #input_string = "ab"  # Cadena de entrada para la simulación FALSA
-    input_string = "babba"  # Cadena de entrada para la simulación VERDADERA
+    input_string = "ab"  # Cadena de entrada para la simulación FALSA
+    #input_string = "babba"  # Cadena de entrada para la simulación VERDADERA
     process_file('expresiones.txt', input_string)

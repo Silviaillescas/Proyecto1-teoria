@@ -1,1 +1,6 @@
 (b|b)*abb(a|b)*
+(a|b)*ab
+a*ba*
+(ab|ba)+
+b*a*
+(a|bb)+
