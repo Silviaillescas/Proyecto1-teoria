@@ -241,15 +241,23 @@ def move(states, symbol):
             result.update(state.transitions[symbol])
     return result
 
+
+#Convierte un AFN (NFA) a un AFD (DFA) usando el algoritmo de subconjuntos.
+#  - nfa: El autómata finito no determinista (NFA) de entrada.
+#RRetorna: Un DFA que es equivalente al NFA dado.
 def construct_dfa_from_nfa(nfa):
+    # Obtén el cierre epsilon del estado inicial del NFA.
     start_closure = epsilon_closure({nfa.start})
+
+    # Mapear los subconjuntos de estados del NFA a los estados del DFA.
     dfa_states = {frozenset(start_closure): 0}
     dfa_transitions = {}
     dfa_accept_states = set()
     
     unmarked_states = [frozenset(start_closure)]
     state_count = 1
-    
+
+    # Procesa cada subconjunto de estados del NFA.
     while unmarked_states:
         current_set = unmarked_states.pop()
         current_state_id = dfa_states[current_set]
@@ -260,28 +268,33 @@ def construct_dfa_from_nfa(nfa):
             next_set = epsilon_closure(move(current_set, symbol))
             if not next_set:
                 continue
-            
+
+            # Si el subconjunto de estados alcanzado aún no está en el DFA, se añade.
             if frozenset(next_set) not in dfa_states:
                 dfa_states[frozenset(next_set)] = state_count
                 unmarked_states.append(frozenset(next_set))
                 state_count += 1
             
+            # Añade la transición para el símbolo en el DFA.
             dfa_transitions[current_state_id][symbol] = dfa_states[frozenset(next_set)]
-        
+        # Si alguno de los estados en el conjunto actual es un estado final del NFA, marca este estado del DFA como de aceptación. 
         if nfa.end in current_set:
             dfa_accept_states.add(current_state_id)
 
     return DFA(0, dfa_transitions, dfa_accept_states)
 
+  #Visualiza un AFN (NFA) recursivamente usando Graphviz.
 def visualize_nfa(start_state, graph, state_map, count):
     if start_state in state_map:
         return state_map[start_state]
 
+    # Asigna un ID único al estado actual y añádelo al mapa de estados.
     state_id = str(count[0])
     state_map[start_state] = state_id
     graph.node(state_id, "State")
     count[0] += 1
-
+    
+    # Recorre las transiciones del estado actual.
     for symbol, states in start_state.transitions.items():
         for state in states:
             target_id = visualize_nfa(state, graph, state_map, count)
@@ -289,6 +302,9 @@ def visualize_nfa(start_state, graph, state_map, count):
 
     return state_id
 
+# Visualiza un AFD (DFA) utilizando Graphviz.
+#   - dfa: El autómata finito determinista (DFA) a visualizar.
+#   - graph: El objeto Graphviz donde se construye el diagrama.
 def visualize_dfa(dfa, graph):
     for state, transitions in dfa.transitions.items():
         graph.node(str(state), shape="circle")
@@ -299,7 +315,10 @@ def visualize_dfa(dfa, graph):
         graph.node(str(accept_state), shape="doublecircle")
 
 # Nueva función para minimizar DFA
+#Recibe un dfa y retorna el dfa minimizado
 def minimize_dfa(dfa):
+
+    #Calcula los pares de estados distinguibles usando el algoritmo de pares.
     def distinguishable_pairs(dfa):
         states = list(dfa.transitions.keys())
         P = {}
@@ -333,6 +352,7 @@ def minimize_dfa(dfa):
             merge_map[s2] = s1
             new_states.discard(s2)
 
+     # Crea las transiciones del DFA minimizado.
     minimized_transitions = {}
     for state in new_states:
         state_repr = merge_map.get(state, state)
@@ -343,11 +363,20 @@ def minimize_dfa(dfa):
             target_repr = merge_map.get(target, target)
             minimized_transitions[state_repr][symbol] = target_repr
 
+    # Estados de aceptación en el DFA minimizado.
     minimized_accept_states = {merge_map.get(s, s) for s in dfa.accept_states}
 
     return DFA(dfa.start_state, minimized_transitions, minimized_accept_states)
 
 # Funciones de simulación de AFN y DFA
+
+#Simula la ejecución de un AFN sobre una cadena de entrada.
+    
+#   - nfa: El autómata finito no determinista (NFA) a simular.
+#   - w: La cadena de entrada a procesar.
+    
+#    Retorna:
+#   - True si la cadena es aceptada por el AFN, False en caso contrario.
 def simulate_nfa(nfa, w):
     current_states = epsilon_closure({nfa.start})
     print(f"Estados actuales después del cierre epsilon: {current_states}")
@@ -368,6 +397,13 @@ def simulate_nfa(nfa, w):
     print(f"El estado final es un estado de aceptación: {result}")
     return result
 
+#Simula la ejecución de un AFD sobre una cadena de entrada.
+    
+#    - dfa: El autómata finito determinista (DFA) a simular.
+#    - w: La cadena de entrada a procesar.
+    
+#    Retorna:
+#    - True si la cadena es aceptada por el DFA, False en caso contrario.
 def simulate_dfa(dfa, w):
     current_state = dfa.start_state
     print(f"Iniciando simulación en el estado: {current_state}")
