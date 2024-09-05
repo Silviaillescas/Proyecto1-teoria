@@ -4,3 +4,6 @@ a*ba*
 (ab|ba)+
 b*a*
 (a|bb)+
+if(a|x|t)+y(else)?
+if(a){y}else{n}, if(atx){y}
+\?(((.|ε)?!?)*)+
